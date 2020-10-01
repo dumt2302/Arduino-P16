@@ -44,7 +44,7 @@ void virage(int VirageDegre)
 
   //définition des variables
     int Arondir;
-    float UnPulse = 0.0480;
+    float UnPulse = 0.0469;
     float ValeurPulse;
     //trouve le nombre de pulse nécessaire au virage
     ValeurPulse = abs(VirageDegre/UnPulse);
@@ -60,18 +60,33 @@ void virage(int VirageDegre)
     {
       while (ENCODER_Read(0)<= Arondir)
       {
-        MOTOR_SetSpeed(0,0.5);
-        MOTOR_SetSpeed(1,-0.5);
+        if (ENCODER_Read(0) <= (2*Arondir/3))
+        {
+          MOTOR_SetSpeed(0,0.4);
+          MOTOR_SetSpeed(1,-0.4);
+        }
+        else 
+        {
+          MOTOR_SetSpeed(0,0.3);
+          MOTOR_SetSpeed(1,-0.3);
+        }
+        
       }
       
     }
     else if(VirageDegre<=0)
     {
       while (ENCODER_Read(1)<= Arondir)
-      {
-         MOTOR_SetSpeed(0,-0.5);
-         MOTOR_SetSpeed(1,0.5);
-      }
+       if (ENCODER_Read(1) <= (2*Arondir/3))
+        {
+          MOTOR_SetSpeed(0,-0.4);
+          MOTOR_SetSpeed(1,0.4);
+        }
+        else 
+        {
+          MOTOR_SetSpeed(0,-0.3);
+          MOTOR_SetSpeed(1,0.3);
+         }
       
     }
   
@@ -107,8 +122,10 @@ void loop() {
   // SOFT_TIMER_Update(); // A decommenter pour utiliser des compteurs logiciels
   delay(100);// Delais pour décharger le CPU
 
-  virage(-90);
+  virage(-720);
   delay(3000);
+ // virage(-720);
+ // delay(3000);
   
 
   // String helloworld= "Hello World! :P";
