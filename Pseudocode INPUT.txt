@@ -1,4 +1,4 @@
-Pseudocode PID Option A
+Pseudocode L'entree de valeurs (INPUT)
 
 //Libairie Lib_Robus
 
