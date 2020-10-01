@@ -1,0 +1,35 @@
+Pseudocode PID Option A
+
+//Libairie Lib_Robus
+
+FONCTION Creationtabdistance():distance
+DEBUT
+
+//Nombre de valeurs (entier) Nombre de valeurs totales
+//Tabdistance (Nombre de valeurs): Tableau de distances
+
+POUR i:= 0 A i < Nombre de valeurs PAR PAS DE 1
+    -> Lire valeur a la position i du tableau au clavier
+
+FIN
+
+//circonferencetotalpulse (constante reelle): Facteur de conversion 
+
+FONCTION Conversion_Distance(distance):pulses
+DEBUT
+
+Afficher Tabdistance
+
+//Tabpulses (reelle) : tableau contenant les valeurs des pulses calculés
+
+POUR i:= 0 A i < 100 PAR PAS DE 1
+   -> SI Tabdistance a l'emplacement i n'est pas egale a zero
+        -> Tabpulses[i]:=Tabdistance[i] * circonferencetotalpulse
+        -> Afficher Tabpulses    
+
+
+FIN
+
+FONCTION Inversiontabpulses(Tabpulses): Tableau inverse de pulses
+
+//Tabinversion (
