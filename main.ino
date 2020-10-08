@@ -1,10 +1,10 @@
 
 /*
-Projet: Le nom du script
+Projet: Fast & Furius - The Sherbie death race ft. Flash Mcqueen
 Equipe: 16
-Auteurs: Tristan Dumas, Bastien Bernier-Rousseau,
-Description: Breve description du script
-Date: 17 septembre 2020
+Auteurs: Équipe 16 - Cracking a code with da boiiiiz
+Description: Permet de parcourir un trajet entré manuelement
+Date: 8 octobre
 */
 
 /* ****************************************************************************
@@ -21,21 +21,41 @@ Variables globales et defines
 **************************************************************************** */
 // -> defines...
 // L'ensemble des fonctions y ont acces
-int VirageDegre = 0;
+//identifie le robot A et B
+bool A = 0;
+bool B = 1;
+//indique l.amplitude du virage en degré
+int VirageDegre;
 
+//encodeur gauche et droite 
+int32_t EncodeurDroite = 0;
+int32_t EncodeurGauche = 0;
+
+//sommation de la différence des erreurs
+int32_t sumDiff = 0;
 /* ****************************************************************************
 Vos propres fonctions sont creees ici
 **************************************************************************** */
-void maFonction(){
-  // code
 
-}
+
+void MasterSlave(float MasterMOTOR, int32_t MasterENCODEUR, int32_t SlaveENCODEUR)  //Prends en entrée la valeur du moteur maitre et les valeurs d'encodeur
+  {
+    float SlaveMOTOR = 0;   //valeur du moteur slave
+    int32_t Diff_ENCODEUR = MasterENCODEUR - SlaveENCODEUR; //différence de pas entre les deux moteurs
+    sumDiff += Diff_ENCODEUR;
+    float kp = 0.0010;  //valeur de la constante P
+    float ki = 0.00003;  //valeur de la constante I
+    SlaveMOTOR = MasterMOTOR + kp * Diff_ENCODEUR + ki * sumDiff ;  //équation de la valeur du moteur slave
+    MOTOR_SetSpeed(1, SlaveMOTOR);
+
+  }
+
 //Par : Tristan et Félix 
-//Date: 1 octobre
-//Description: Convertir 
+//Date de dernière modification: 8 octobre 
+//Description: permet de faire des virages en degrés
 //
 //
-void virage(int VirageDegre)
+void virage(int VirageDegre,bool robot)
 {
   // code
   //la circonférence d'une roue est 23.93894cm
@@ -43,8 +63,16 @@ void virage(int VirageDegre)
   //1 degré est égal à 24.934 pulse, donc 25 pulse.
 
   //définition des variables
+    
     int Arondir;
-    float UnPulse = 0.0469;
+    float UnPulse;
+    if (robot==0){
+     UnPulse= 0.0469;
+      }
+   else{
+     UnPulse = 0.0447;
+     }
+
     float ValeurPulse;
     //trouve le nombre de pulse nécessaire au virage
     ValeurPulse = abs(VirageDegre/UnPulse);
@@ -56,39 +84,55 @@ void virage(int VirageDegre)
   //Permet d'arrêter le virage à la bonne direction. 
   
     //Défini si le virage sera vers la gauche ou vers la droite. Positif est en sense horaire et négatif est anti-horaire. 
-    if (VirageDegre>=0)
-    {
-      while (ENCODER_Read(0)<= Arondir)
+      if (VirageDegre>=0)
       {
-        if (ENCODER_Read(0) <= (2*Arondir/3))
+        ENCODER_Reset(0);
+        ENCODER_Reset(1);
+        while (ENCODER_Read(0)<= Arondir)
         {
-          MOTOR_SetSpeed(0,0.4);
-          MOTOR_SetSpeed(1,-0.4);
-        }
-        else 
-        {
-          MOTOR_SetSpeed(0,0.3);
-          MOTOR_SetSpeed(1,-0.3);
+          if (ENCODER_Read(0) <= (Arondir/3)) 
+          {
+            MOTOR_SetSpeed(0,0.4);
+            MOTOR_SetSpeed(1,-0.4);
+          }
+          else if (ENCODER_Read(0) <= (2*Arondir/3) )
+          {
+            MOTOR_SetSpeed(0,0.3);
+            MOTOR_SetSpeed(1,-0.3);
+          }
+          else
+          {
+            MOTOR_SetSpeed(0,0.2);
+            MOTOR_SetSpeed(1,-0.2);
+          }
+          
         }
         
       }
-      
-    }
-    else if(VirageDegre<=0)
-    {
-      while (ENCODER_Read(1)<= Arondir)
-       if (ENCODER_Read(1) <= (2*Arondir/3))
+      else if(VirageDegre<=0)
+      {
+        while (ENCODER_Read(1)<= Arondir)
         {
-          MOTOR_SetSpeed(0,-0.4);
-          MOTOR_SetSpeed(1,0.4);
+          if (ENCODER_Read(1)<= (Arondir/3))
+          {
+            MOTOR_SetSpeed(0,-0.4);
+            MOTOR_SetSpeed(1,0.4);
+          }
+          
+          else if (ENCODER_Read(1) <= (2*Arondir/3))
+          {
+            MOTOR_SetSpeed(0,-0.3);
+            MOTOR_SetSpeed(1,0.3);
+          }
+          else 
+          {
+            MOTOR_SetSpeed(0,-0.2);
+            MOTOR_SetSpeed(1,0.2);
+          }
         }
-        else 
-        {
-          MOTOR_SetSpeed(0,-0.3);
-          MOTOR_SetSpeed(1,0.3);
-         }
-      
-    }
+        
+        
+      }
   
   //Arrête la rotation
   MOTOR_SetSpeed(0,0);
@@ -113,6 +157,7 @@ void setup(){
 }
 
 
+
 /* ****************************************************************************
 Fonctions de boucle infini (loop())
 **************************************************************************** */
@@ -122,15 +167,5 @@ void loop() {
   // SOFT_TIMER_Update(); // A decommenter pour utiliser des compteurs logiciels
   delay(100);// Delais pour décharger le CPU
 
-  virage(-720);
-  delay(3000);
- // virage(-720);
- // delay(3000);
-  
 
-  // String helloworld= "Hello World! :P";
-    // digitalWrite(13, HIGH);
-    // delay(1000);
-    // digitalWrite(13, LOW);
-    // Serial.print (helloworld);
 }
