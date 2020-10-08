@@ -2,10 +2,19 @@ Pseudocode L'entree de valeurs (INPUT)
 
 //Libairie Lib_Robus
 
+<<<<<<< HEAD
 FONCTION Creationtabdistance():distance
 DEBUT
 
 //Nombre de valeurs (entier) Nombre de valeurs totales
+=======
+
+//Nombre de valeurs (entier) Nombre de valeurs totales
+
+FONCTION Creationtabdistance():distance
+DEBUT
+
+>>>>>>> master
 //Tabdistance (Nombre de valeurs): Tableau de distances
 
 POUR i:= 0 A i < Nombre de valeurs PAR PAS DE 1
@@ -25,11 +34,27 @@ Afficher Tabdistance
 POUR i:= 0 A i < 100 PAR PAS DE 1
    -> SI Tabdistance a l'emplacement i n'est pas egale a zero
         -> Tabpulses[i]:=Tabdistance[i] * circonferencetotalpulse
+<<<<<<< HEAD
         -> Afficher Tabpulses    
+=======
+    
+Afficher Tabpulses*****(Sinon dans la boucle POUR)   
+>>>>>>> master
 
 
 FIN
 
 FONCTION Inversiontabpulses(Tabpulses): Tableau inverse de pulses
+<<<<<<< HEAD
 
 //Tabinversion (
+=======
+DEBUT
+
+//Tabinversion (Tabpulses): Inversion du tableau
+
+POUR i:=0 A i < Nombre de valeurs PAR PAS DE 1
+	POUR j:=Nombre de valeurs - 1 PAR PAS DE -1
+		-> Tabinversion[i]:=Tabpulses[j]
+FIN
+>>>>>>> master
