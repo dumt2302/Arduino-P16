@@ -1,4 +1,3 @@
-
 /*
 Projet: Fast & Furius - The Sherbie death race ft. Flash Mcqueen
 Equipe: 16
@@ -67,7 +66,7 @@ void virage(int VirageDegre,bool robot)
     int Arondir;
     float UnPulse;
     if (robot==0){
-     UnPulse= 0.0469;
+     UnPulse= 0.0457;
       }
    else{
      UnPulse = 0.0447;
@@ -90,21 +89,27 @@ void virage(int VirageDegre,bool robot)
         ENCODER_Reset(1);
         while (ENCODER_Read(0)<= Arondir)
         {
-          if (ENCODER_Read(0) <= (Arondir/3)) 
+          if (ENCODER_Read(0) <= (Arondir/4)) 
           {
             MOTOR_SetSpeed(0,0.4);
             MOTOR_SetSpeed(1,-0.4);
           }
-          else if (ENCODER_Read(0) <= (2*Arondir/3) )
+          else if (ENCODER_Read(0) <= (2*Arondir/4) )
           {
             MOTOR_SetSpeed(0,0.3);
             MOTOR_SetSpeed(1,-0.3);
+          }
+          else if (ENCODER_Read(0) <= (3*Arondir/4) )
+          {
+            MOTOR_SetSpeed(0,0.25);
+            MOTOR_SetSpeed(1,-0.25);
           }
           else
           {
             MOTOR_SetSpeed(0,0.2);
             MOTOR_SetSpeed(1,-0.2);
           }
+          
           
         }
         
@@ -113,22 +118,28 @@ void virage(int VirageDegre,bool robot)
       {
         while (ENCODER_Read(1)<= Arondir)
         {
-          if (ENCODER_Read(1)<= (Arondir/3))
+          if (ENCODER_Read(1)<= (Arondir/4))
           {
             MOTOR_SetSpeed(0,-0.4);
             MOTOR_SetSpeed(1,0.4);
           }
           
-          else if (ENCODER_Read(1) <= (2*Arondir/3))
+          else if (ENCODER_Read(1) <= (2*Arondir/4))
           {
             MOTOR_SetSpeed(0,-0.3);
             MOTOR_SetSpeed(1,0.3);
           }
-          else 
+          else if (ENCODER_Read(1) <= (3*Arondir/4))
+          {
+            MOTOR_SetSpeed(0,-0.25);
+            MOTOR_SetSpeed(1,0.25);
+          }
+          else
           {
             MOTOR_SetSpeed(0,-0.2);
             MOTOR_SetSpeed(1,0.2);
           }
+          
         }
         
         
@@ -167,5 +178,7 @@ void loop() {
   // SOFT_TIMER_Update(); // A decommenter pour utiliser des compteurs logiciels
   delay(100);// Delais pour décharger le CPU
 
-
+  virage(720,A);
+  delay(1333);
+  delay(1333);
 }
