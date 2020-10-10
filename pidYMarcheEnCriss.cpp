@@ -1,0 +1,220 @@
+#include <Arduino.h>
+#include <librobus.h>
+
+#define MOTOR_REVERSED 0 // 1 = moteur inverse B, 0 = moteur correct A
+
+int32_t EncodeurDroite = 0;
+int32_t EncodeurGauche = 0;
+int32_t sumDiff = 0;
+bool A = 0;
+bool B = 1;
+int VirageDegre;
+
+void MasterSlave(float MasterMOTOR, int32_t MasterENCODEUR, int32_t SlaveENCODEUR) //Prends en entrée la valeur du moteur maitre et les valeurs d'encodeur
+{
+  float SlaveMOTOR;                                       //valeur du moteur slave
+  int32_t Diff_ENCODEUR = MasterENCODEUR - SlaveENCODEUR; //différence de pas entre les deux moteurs
+  sumDiff += Diff_ENCODEUR;
+  float kp = 0.001;                                             //valeur de la constante P kp = 0.001
+  float ki = 0.00003;                                           //valeur de la constante I ki = 0.00003                            
+  SlaveMOTOR = MasterMOTOR + kp * Diff_ENCODEUR + ki * sumDiff; //équation de la valeur du moteur slave
+  MOTOR_SetSpeed(1, SlaveMOTOR);
+}
+
+void FonctionAvancer2(int DistanceCm)
+{
+
+
+  ENCODER_ReadReset(0);
+  ENCODER_ReadReset(1);
+  float vitesse;
+  float Vmax = 0.5;
+  float Vmin = 0.1;
+  float a = 0.2;
+  float distance = ENCODER_Read(0) * 0.0074809175;
+  float y1 = a * distance + Vmin;
+  float y2 = Vmax;
+  float y3 = a * (DistanceCm - distance) + Vmin;
+  #if MOTOR_REVERSED  
+  while (DistanceCm > -distance)
+#else
+  while (DistanceCm > distance)
+#endif
+  {
+    if(y1 < y2 && y1 < y3)
+    {
+      vitesse = y1;
+      MOTOR_SetSpeed(0, vitesse);
+      MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
+
+    }
+    else if(y2 < y1 && y2 < y3)
+    {
+      vitesse = y2;
+      MOTOR_SetSpeed(0, vitesse);
+      MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
+    }
+    else
+    {
+      vitesse = y3;
+      MOTOR_SetSpeed(0, vitesse);
+      MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
+    }
+  }
+}
+
+void FonctionAvancer(int DistanceCm)
+{
+  float vitesseA = 0.5;
+
+  long int pulse = round(DistanceCm / 0.0074809175);
+  ENCODER_ReadReset(0);
+  ENCODER_ReadReset(1);
+  MOTOR_SetSpeed(0, vitesseA);
+  MOTOR_SetSpeed(1, vitesseA);
+// Black magic
+#if MOTOR_REVERSED  
+  while (ENCODER_Read(0) > -pulse)
+#else
+  while (ENCODER_Read(0) < pulse)
+#endif
+  {
+    // MOTOR_SetSpeed(0, vitesse);
+    MasterSlave(vitesseA, ENCODER_Read(0), ENCODER_Read(1));
+    Serial.print(ENCODER_Read(0));
+    Serial.print("  ");
+    Serial.print(ENCODER_Read(1));
+    Serial.print("  ");
+    Serial.println(ENCODER_Read(1)- ENCODER_Read(0));
+  }
+  MOTOR_SetSpeed(0, 0);
+  MOTOR_SetSpeed(1, 0);
+  sumDiff = 0;  //dont ask, or ask charles
+}
+
+void virage(int VirageDegre,bool robot)
+{
+  ENCODER_ReadReset(1);
+  ENCODER_ReadReset(0);
+  // code
+  //la circonférence d'une roue est 23.93894cm
+  //la circonférence d'un tour du robot est de 59.6902cm
+  //1 degré est égal à 24.934 pulse, donc 25 pulse.
+
+  //définition des variables
+    
+    int Arondir;
+    float UnPulse;
+    if (robot==0){
+     UnPulse= 0.0469;
+      }
+   else{
+     UnPulse = 0.0447;
+     }
+
+    float ValeurPulse;
+    //trouve le nombre de pulse nécessaire au virage
+    ValeurPulse = abs(VirageDegre/UnPulse);
+    Arondir = round(ValeurPulse);
+    
+   //réinitialise le compteur de pule de l'encodeur
+   ENCODER_Reset(0);
+   ENCODER_Reset(1);
+  //Permet d'arrêter le virage à la bonne direction. 
+  
+    //Défini si le virage sera vers la gauche ou vers la droite. Positif est en sense horaire et négatif est anti-horaire. 
+      if (VirageDegre>=0)
+      {
+        ENCODER_Reset(0);
+        ENCODER_Reset(1);
+        while (ENCODER_Read(0)<= Arondir)
+        {
+          if (ENCODER_Read(0) <= (Arondir/3)) 
+          {
+            MOTOR_SetSpeed(0,0.4);
+            MOTOR_SetSpeed(1,-0.4);
+          }
+          else if (ENCODER_Read(0) <= (2*Arondir/3) )
+          {
+            MOTOR_SetSpeed(0,0.3);
+            MOTOR_SetSpeed(1,-0.3);
+          }
+          else
+          {
+            MOTOR_SetSpeed(0,0.2);
+            MOTOR_SetSpeed(1,-0.2);
+          }
+          
+        }
+        
+      }
+      else if(VirageDegre<=0)
+      {
+        while (ENCODER_Read(1)<= Arondir)
+        {
+          if (ENCODER_Read(1)<= (Arondir/3))
+          {
+            MOTOR_SetSpeed(0,-0.4);
+            MOTOR_SetSpeed(1,0.4);
+          }
+          
+          else if (ENCODER_Read(1) <= (2*Arondir/3))
+          {
+            MOTOR_SetSpeed(0,-0.3);
+            MOTOR_SetSpeed(1,0.3);
+          }
+          else 
+          {
+            MOTOR_SetSpeed(0,-0.2);
+            MOTOR_SetSpeed(1,0.2);
+          }
+        }
+        
+        
+      }
+  
+  //Arrête la rotation
+  MOTOR_SetSpeed(0,0);
+  MOTOR_SetSpeed(1,0);
+  //réinitialise le compteur de pule de l'encodeur
+   ENCODER_Reset(0);
+   ENCODER_Reset(1);
+
+}
+
+void setup()
+{
+  BoardInit(); //pour librairie
+
+  MOTOR_SetSpeed(0, 0); //Set les moteurs à 0
+  MOTOR_SetSpeed(1, 0);
+}
+
+void loop()
+{
+
+  FonctionAvancer2(122);
+  virage(0,A);
+  /*delay(1000);
+  virage(-90,A);
+  delay(1000);
+  FonctionAvancer(90);
+  delay(1000);
+  virage(90,A);
+  delay(1000);
+  FonctionAvancer(107);
+  delay(1000);
+  virage(45,A);
+  delay(1000);
+  FonctionAvancer(174);
+  delay(1000);
+  virage(-90,A);
+  delay(1000);
+  FonctionAvancer(66);
+  delay(1000);
+  virage(45,A);
+  delay(1000);
+  FonctionAvancer(104);
+  delay(1000);
+  virage(180,A);*/
+}
