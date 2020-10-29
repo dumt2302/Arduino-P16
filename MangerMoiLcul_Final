@@ -9,7 +9,10 @@ int32_t sumDiff = 0;
 bool A = 0;
 bool B = 1;
 int VirageDegre;
-
+int couleur;
+int jaune =1;
+int bleu = 2;
+int rouge =3;
 
 void MasterSlave(float MasterMOTOR, int32_t MasterENCODEUR, int32_t SlaveENCODEUR) //Prends en entrée la valeur du moteur maitre et les valeurs d'encodeur
 {
@@ -22,7 +25,7 @@ void MasterSlave(float MasterMOTOR, int32_t MasterENCODEUR, int32_t SlaveENCODEU
   MOTOR_SetSpeed(1, SlaveMOTOR);
 }
 
-void FonctionAvancer2(int DistanceCm)
+void Avancer(int DistanceCm)
 {
 
 
@@ -183,52 +186,64 @@ void setup()
   MOTOR_SetSpeed(0, 0); //Set les moteurs à 0
   MOTOR_SetSpeed(1, 0);
 }
-
+void radarlapolice()
+{
+  
+}
 void loop() //fonction main permettant de mettre les distances et les angles de rotation pour le parcours
 {
-  Delay(100);
-  Avancer(100);
-  Delay(500);
-  virage(90,A);
-  Delay(500);
-  Avancer(25);
-  Delay(500);
-  virage(-90,A);
-  Delay(500);
-  Avancer(20);
-  Delay(500);
-  //couleur 
-  couleur = jaune; 
-  Avancer(100);
-  Delay(500);
-  //pick up la puce
+  delay(100);
+  Avancer(80);
+  delay(500);
+  virage(90,B);
+  delay(500);
+  Avancer(23);
+  delay(500);
+  virage(-90,B);
+  delay(3000);
+  //couleur (detecteur de couleur) icitte 
+  couleur = rouge; 
+  Avancer(130);
+  MOTOR_SetSpeed(0,0);
+  MOTOR_SetSpeed(1,0);
+  //pick up la petite
   //
   switch (couleur)
   {
-  case 1: 
-      Avancer(80);
-      Delay(400);
-      virage(90,A);
-      Delay(400);
+  case 1:
+      delay(2000);
+      Avancer(75);
+      delay(400);
+      virage(90,B);
+      delay(400);
       Avancer(40);
+      MOTOR_SetSpeed(0,0);
+      MOTOR_SetSpeed(1,0);
     break;
    case 2: 
+      delay(2000);
       Avancer(170);
-      Delay(400);
-      virage(-90,A);
-      Delay(400);
-      Avancer(40);
+      delay(400);
+      virage(-90,B);
+      delay(400);
+      Avancer(30);
+      MOTOR_SetSpeed(0,0);
+      MOTOR_SetSpeed(1,0);
     break;
      case 3: 
-      Avancer(250);
-      Delay(400);
-      virage(90,A);
-      Delay(400);
+      delay(2000);
+      Avancer(240);
+      delay(400);
+      virage(90,B);
+      delay(400);
       Avancer(40);
+      MOTOR_SetSpeed(0,0);
+      MOTOR_SetSpeed(1,0);
     break;
   default:
     break;
   }
-  Delay(50000000);
-
+  delay(50000000);
+  
+  
 }
