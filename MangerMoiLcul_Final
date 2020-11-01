@@ -186,64 +186,112 @@ void setup()
   MOTOR_SetSpeed(0, 0); //Set les moteurs à 0
   MOTOR_SetSpeed(1, 0);
 }
-void radarlapolice()
-{
-  
-}
-void loop() //fonction main permettant de mettre les distances et les angles de rotation pour le parcours
-{
-  delay(100);
-  Avancer(80);
-  delay(500);
-  virage(90,B);
-  delay(500);
-  Avancer(23);
-  delay(500);
-  virage(-90,B);
-  delay(3000);
-  //couleur (detecteur de couleur) icitte 
-  couleur = rouge; 
-  Avancer(130);
-  MOTOR_SetSpeed(0,0);
-  MOTOR_SetSpeed(1,0);
-  //pick up la petite
-  //
-  switch (couleur)
-  {
-  case 1:
-      delay(2000);
-      Avancer(75);
-      delay(400);
-      virage(90,B);
-      delay(400);
-      Avancer(40);
-      MOTOR_SetSpeed(0,0);
-      MOTOR_SetSpeed(1,0);
-    break;
-   case 2: 
-      delay(2000);
-      Avancer(170);
-      delay(400);
-      virage(-90,B);
-      delay(400);
-      Avancer(30);
-      MOTOR_SetSpeed(0,0);
-      MOTOR_SetSpeed(1,0);
-    break;
-     case 3: 
-      delay(2000);
-      Avancer(240);
-      delay(400);
-      virage(90,B);
-      delay(400);
-      Avancer(40);
-      MOTOR_SetSpeed(0,0);
-      MOTOR_SetSpeed(1,0);
-    break;
-  default:
-    break;
+
+
+void defoncerlaquille(){
+  int block=1;
+  bool quilledefoncer=0;
+  while (block<=5 && quilledefoncer==0 ){
+    if (block=!3 && block!=1)
+    {
+      while(ENCODER_Read(0)*0.0074809175*-1<100){
+
+        float distancehorizon=ENCODER_Read(0)*0.0074809175*-1;
+        MOTOR_SetSpeed(0, 0.3);
+        MasterSlave(0.3, ENCODER_Read(0), ENCODER_Read(1));
+
+          if ( SONAR_GetRange(0)<85){
+            MOTOR_SetSpeed(0, 0);
+            MOTOR_SetSpeed(1, 0);
+            virage(-90,B);
+            delay(500);
+            Avancer(84);
+            MOTOR_SetSpeed(0, 0);
+            MOTOR_SetSpeed(1, 0);
+            delay(500);
+
+              if (block==5)
+              {
+              Avancer(95 - distancehorizon);
+              MOTOR_SetSpeed(0, 0);
+              MOTOR_SetSpeed(1, 0);
+              delay(60000);
+              quilledefoncer=1;
+              }
+              else
+              {
+              delay(60000);
+              quilledefoncer=1;
+              }
+            
+            }
+      }
+    }
+    if (block==1)
+    {
+      while(ENCODER_Read(0)*0.0074809175*-1<70){
+
+        float distancehorizon=ENCODER_Read(0)*0.0074809175*-1;
+        MOTOR_SetSpeed(0, 0.3);
+        MasterSlave(0.3, ENCODER_Read(0), ENCODER_Read(1));
+
+          if ( SONAR_GetRange(0)<85)
+          {
+            MOTOR_SetSpeed(0, 0);
+            MOTOR_SetSpeed(1, 0);
+            virage(-90,B);
+            delay(500);
+            Avancer(84);
+            MOTOR_SetSpeed(0, 0);
+            MOTOR_SetSpeed(1, 0);
+            delay(6000);
+          }
+      }
+    }
+    else{
+      while(ENCODER_Read(0)*0.0074809175*-1<100){
+
+        float distancehorizon=ENCODER_Read(0)*0.0074809175*-1;
+        MOTOR_SetSpeed(0, 0.3);
+        MasterSlave(0.3, ENCODER_Read(0), ENCODER_Read(1));
+
+          if ( SONAR_GetRange(0)<85){
+            MOTOR_SetSpeed(0, 0);
+            MOTOR_SetSpeed(1, 0);
+            delay(500);
+            if(distancehorizon<40 && distancehorizon>65){
+              virage(-90,B);
+              delay(500);
+              Avancer(84);
+              MOTOR_SetSpeed(0, 0);
+              MOTOR_SetSpeed(1, 0);
+              delay(60000);
+              quilledefoncer=1;
+            }
+            else{
+              delay(500);
+              Avancer(18);
+              delay(500);
+              virage(-90,B);
+              delay(500);
+              Avancer(29);
+              delay(500);
+              virage(-90,B);
+              delay(500);
+              Avancer(18);
+              delay(500);
+              virage(90,B);
+              delay(500);
+              Avancer(37);
+              MOTOR_SetSpeed(0, 0);
+              MOTOR_SetSpeed(1, 0);
+              quilledefoncer=1;
+            }
+          }
+       }   
+     }
+    ENCODER_Reset(1);
+    ENCODER_Reset(0);
+    block++;
   }
-  delay(50000000);
-  
-  
 }
