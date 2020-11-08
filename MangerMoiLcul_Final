@@ -13,6 +13,9 @@ int couleur;
 int jaune =1;
 int bleu = 2;
 int rouge =3;
+int block=1;
+int quilledefoncer=0;
+
 
 void MasterSlave(float MasterMOTOR, int32_t MasterENCODEUR, int32_t SlaveENCODEUR) //Prends en entrée la valeur du moteur maitre et les valeurs d'encodeur
 {
@@ -27,12 +30,12 @@ void MasterSlave(float MasterMOTOR, int32_t MasterENCODEUR, int32_t SlaveENCODEU
 
 void Avancer(int DistanceCm)
 {
-
+  unsigned long timer;
 
   ENCODER_ReadReset(0); //reset des encodeurs
   ENCODER_ReadReset(1);
   float vitesse;
-  float Vmax = 0.7; //vitesse max
+  float Vmax = 0.4; //vitesse max
   float Vmin = 0.1; //vitesse min
   float a = 0.03;   //acceleration (chiffre magique)
   float distance = 0;
@@ -46,12 +49,15 @@ void Avancer(int DistanceCm)
   compteur = -1;
 
 #endif
-   while (DistanceCm > distance)
+   while ((DistanceCm > distance) && (quilledefoncer!=1))
   {
+    
     y1 = a * distance + Vmin;
     y2 = Vmax;
     y3 = a * (DistanceCm - distance) + Vmin;
-    if(y1 < y2 && y1 < y3)  //l'equation utilisee pour trouver la vitesse est toujour celle donnant le plus petit resultat dans le temps
+
+
+    if(y1 < y2 && y1 < y3  )  //l'equation utilisee pour trouver la vitesse est toujour celle donnant le plus petit resultat dans le temps
     {
       distance = ENCODER_Read(0) * 0.0074809175 * compteur;
       y1 = a * distance + Vmin;
@@ -60,9 +66,15 @@ void Avancer(int DistanceCm)
       MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
       Serial.print("y1  ");                     //LES SERIAL.PRINT SONT IMPORTANTS, CAR ILS DONNENT UN DELAIS PARFAIT POUR NOTRE UTILISATION
       Serial.println(distance);
+      if(SONAR_GetRange(0)<70 && quilledefoncer!=2)
+      {
+         MOTOR_SetSpeed(0, 0);
+         MOTOR_SetSpeed(1, 0);
+         quilledefoncer=1;
+      }
 
     }
-    else if(y2 < y1 && y2 < y3)
+    else if(y2 < y1 && y2 < y3 )
     {
       distance = ENCODER_Read(0) * 0.0074809175 * compteur;
       y2 = Vmax;
@@ -71,6 +83,12 @@ void Avancer(int DistanceCm)
       MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
       Serial.print("y2  ");
       Serial.println(distance);
+     if(SONAR_GetRange(0)<70 && quilledefoncer!=2)
+      {
+          MOTOR_SetSpeed(0, 0);
+          MOTOR_SetSpeed(1, 0);
+          quilledefoncer=1;
+      }
     }
     else
     {
@@ -81,10 +99,16 @@ void Avancer(int DistanceCm)
       MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
       Serial.print("y3  ");
       Serial.println(distance);
+      if(SONAR_GetRange(0)<70 && quilledefoncer!=2)
+        {
+            MOTOR_SetSpeed(0, 0);
+            MOTOR_SetSpeed(1, 0);
+            quilledefoncer=1;
+        }
     }
   }
 
-  delay(10);
+  delay(100);
 }
 
 
@@ -179,7 +203,7 @@ void virage(int VirageDegre,bool robot)
 
 }
 
-void setup()
+void  setup()
 {
   BoardInit(); //pour librairie
 
@@ -187,75 +211,56 @@ void setup()
   MOTOR_SetSpeed(1, 0);
 }
 
+/*
+void loop(){
+ 
+  ENCODER_Reset(1);
+  ENCODER_Reset(0);
+ 
+  while ((block<=5) && (quilledefoncer==0)){
 
-void defoncerlaquille(){
-  int block=1;
-  bool quilledefoncer=0;
-  while (block<=5 && quilledefoncer==0 ){
-    if (block=!3 && block!=1)
-    {
-      while(ENCODER_Read(0)*0.0074809175*-1<100){
-
-        float distancehorizon=ENCODER_Read(0)*0.0074809175*-1;
-        MOTOR_SetSpeed(0, 0.3);
-        MasterSlave(0.3, ENCODER_Read(0), ENCODER_Read(1));
-
-          if ( SONAR_GetRange(0)<85){
-            MOTOR_SetSpeed(0, 0);
-            MOTOR_SetSpeed(1, 0);
-            virage(-90,B);
-            delay(500);
-            Avancer(84);
-            MOTOR_SetSpeed(0, 0);
-            MOTOR_SetSpeed(1, 0);
-            delay(500);
-
-              if (block==5)
-              {
-              Avancer(95 - distancehorizon);
-              MOTOR_SetSpeed(0, 0);
-              MOTOR_SetSpeed(1, 0);
-              delay(60000);
-              quilledefoncer=1;
-              }
-              else
-              {
-              delay(60000);
-              quilledefoncer=1;
-              }
-            
-            }
-      }
-    }
     if (block==1)
     {
+      ENCODER_Reset(1);
+      ENCODER_Reset(0);
+      Serial.print("1");
       while(ENCODER_Read(0)*0.0074809175*-1<70){
-
-        float distancehorizon=ENCODER_Read(0)*0.0074809175*-1;
         MOTOR_SetSpeed(0, 0.3);
         MasterSlave(0.3, ENCODER_Read(0), ENCODER_Read(1));
 
-          if ( SONAR_GetRange(0)<85)
+          /*if ( SONAR_GetRange(0)<85)
           {
             MOTOR_SetSpeed(0, 0);
             MOTOR_SetSpeed(1, 0);
+            delay(1000);
             virage(-90,B);
-            delay(500);
-            Avancer(84);
-            MOTOR_SetSpeed(0, 0);
-            MOTOR_SetSpeed(1, 0);
-            delay(6000);
+            ENCODER_Reset(1);
+            ENCODER_Reset(0);
+            delay(1000);
+              while (ENCODER_Read(0)*0.0074809175*-1<80)
+            {
+                MOTOR_SetSpeed(0, 0.3);
+                MasterSlave(0.3, ENCODER_Read(0), ENCODER_Read(1));
+            }
+              MOTOR_SetSpeed(0, 0);
+              MOTOR_SetSpeed(1, 0);
+              delay(60000);
           }
       }
     }
-    else{
+
+    else if (block==3)
+    {
+      ENCODER_Reset(1);
+      ENCODER_Reset(0);
+      Serial.println("3");
       while(ENCODER_Read(0)*0.0074809175*-1<100){
 
         float distancehorizon=ENCODER_Read(0)*0.0074809175*-1;
         MOTOR_SetSpeed(0, 0.3);
         MasterSlave(0.3, ENCODER_Read(0), ENCODER_Read(1));
 
-          if ( SONAR_GetRange(0)<85){
+          /*if ( SONAR_GetRange(0)>85){
             MOTOR_SetSpeed(0, 0);
             MOTOR_SetSpeed(1, 0);
             delay(500);
@@ -290,8 +295,63 @@ void defoncerlaquille(){
           }
        }   
      }
+
+    else
+    {
+      ENCODER_Reset(1);
+      ENCODER_Reset(0);
+      Serial.println("245");
+      while(ENCODER_Read(0)*0.0074809175*-1<100){
+
+        float distancehorizon=ENCODER_Read(0)*0.0074809175*-1;
+        MOTOR_SetSpeed(0, 0.3);
+        MasterSlave(0.3, ENCODER_Read(0), ENCODER_Read(1));
+
+          /*if ( SONAR_GetRange(0)>85){
+            MOTOR_SetSpeed(0, 0);
+            MOTOR_SetSpeed(1, 0);
+            delay(500);
+            virage(-90,B);
+            delay(500);
+            Avancer(84);
+            MOTOR_SetSpeed(0, 0);
+            MOTOR_SetSpeed(1, 0);
+            delay(500);
+
+              if (block==5)
+              {
+              Avancer(95 - distancehorizon);
+              MOTOR_SetSpeed(0, 0);
+              MOTOR_SetSpeed(1, 0);
+              delay(60000);
+              quilledefoncer=1;
+              }
+              else
+              {
+              delay(60000);
+              quilledefoncer=1;
+              }
+            
+            }
+      }
+    }
+  
+    
     ENCODER_Reset(1);
     ENCODER_Reset(0);
     block++;
   }
+}
+*/
+
+void loop(){
+  delay(4000);
+  Avancer(470);
+  quilledefoncer=2;
+  delay(1000);
+  virage(-90,B);
+  delay(1000);
+  Avancer(80);
+  delay(5000);
+  virage(90,B);
 }
