@@ -1,0 +1,399 @@
+#include <Arduino.h>
+#include <librobus.h>
+#include <Wire.h>
+#include "Adafruit_TCS34725.h"
+
+#define redpin A3
+#define greenpin A5
+#define bluepin A6
+// for a common anode LED, connect the common pin to +5V
+// for common cathode, connect the common to ground
+
+// set to false if using a common cathode LED
+#define commonAnode true
+
+// our RGB -> eye-recognized gamma color
+byte gammatable[256];
+
+int FonctionCouleur(){
+  int couleur = 0;
+  uint16_t clear, red, green, blue;
+
+    tcs.setInterrupt(false);      // turn on LED
+
+    delay(60);  // takes 50ms to read
+
+    tcs.getRawData(&red, &green, &blue, &clear);
+
+    tcs.setInterrupt(true);  // turn off LED
+
+    Serial.print("C:\t"); Serial.print(clear);
+    Serial.print("\tR:\t"); Serial.print(red);
+    Serial.print("\tG:\t"); Serial.print(green);
+    Serial.print("\tB:\t"); Serial.print(blue);
+
+    // Figure out some basic hex code for visualization
+    uint32_t sum = clear;
+    float r, g, b;
+    r = red; r /= sum;
+    g = green; g /= sum;
+    b = blue; b /= sum;
+    r *= 256; g *= 256; b *= 256;
+    Serial.print("\t");
+    Serial.print((int)r, HEX); Serial.print((int)g, HEX); Serial.print((int)b, HEX);
+    Serial.println();
+
+    //Serial.print((int)r ); Serial.print(" "); Serial.print((int)g);Serial.print(" ");  Serial.println((int)b );
+
+    //analogWrite(redpin, gammatable[(int)r]);
+    //analogWrite(greenpin, gammatable[(int)g]);
+    //analogWrite(bluepin, gammatable[(int)b]);
+    if((clear <=1680) && (clear >=1600))
+    {
+      couleur = 2;
+    }
+    else if((clear <=1790) && (clear >=1730))
+    {
+      couleur = 1;
+    }
+    else if((clear <=1860) && (clear >=1800))
+    {
+      couleur = 3;
+    }
+    return couleur;
+}
+
+
+int32_t EncodeurDroite = 0;
+int32_t EncodeurGauche = 0;
+int32_t sumDiff = 0;
+bool A = 0;
+bool B = 1;
+int VirageDegre;
+float distanceIR = 0;
+int couleur;
+int jaune =1;
+int bleu = 2;
+int rouge =3;
+
+
+void MasterSlave(float MasterMOTOR, int32_t MasterENCODEUR, int32_t SlaveENCODEUR) //Prends en entrée la valeur du moteur maitre et les valeurs d'encodeur
+{
+  float SlaveMOTOR;                                       //valeur du moteur slave
+  int32_t Diff_ENCODEUR = MasterENCODEUR - SlaveENCODEUR; //différence de pas entre les deux moteurs
+  sumDiff += Diff_ENCODEUR;
+  float kp = 0.001;                                             //valeur de la constante P kp = 0.001
+  float ki = 0.00003;                                           //valeur de la constante I ki = 0.00003                            
+  SlaveMOTOR = MasterMOTOR + kp * Diff_ENCODEUR + ki * sumDiff; //équation de la valeur du moteur slave
+  MOTOR_SetSpeed(1, SlaveMOTOR);
+}
+
+void Avancer(int DistanceCm)
+{
+
+
+  ENCODER_ReadReset(0); //reset des encodeurs
+  ENCODER_ReadReset(1);
+  float vitesse;
+  float Vmax = 0.7; //vitesse max
+  float Vmin = 0.1; //vitesse min
+  float a = 0.03;   //acceleration (chiffre magique)
+  float distance = 0;
+  int compteur = 1;
+
+
+  float y1 = a * distance + Vmin; //fonction d'acceleration
+  float y2 = Vmax;  //fonction de vitesse max
+  float y3 = a * (DistanceCm - distance) + Vmin;  //fonction de decceleration
+  #if MOTOR_REVERSED  //car un encodeur est inversé
+  compteur = -1;
+
+#endif
+   while (DistanceCm > distance)
+  {
+    y1 = a * distance + Vmin;
+    y2 = Vmax;
+    y3 = a * (DistanceCm - distance) + Vmin;
+    if(y1 < y2 && y1 < y3)  //l'equation utilisee pour trouver la vitesse est toujour celle donnant le plus petit resultat dans le temps
+    {
+      distance = ENCODER_Read(0) * 0.0074809175 * compteur;
+      y1 = a * distance + Vmin;
+      vitesse = y1;
+      MOTOR_SetSpeed(0, vitesse);
+      MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
+      delay(10);
+
+    }
+    else if(y2 < y1 && y2 < y3)
+    {
+      distance = ENCODER_Read(0) * 0.0074809175 * compteur;
+      y2 = Vmax;
+      vitesse = y2;
+      MOTOR_SetSpeed(0, vitesse);
+      MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
+      delay(10);
+    }
+    else
+    {
+      distance = ENCODER_Read(0) * 0.0074809175 * compteur;
+      y3 = a * (DistanceCm - distance) + Vmin;
+      vitesse = y3;
+      MOTOR_SetSpeed(0, vitesse);
+      MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
+      delay(10);
+    }
+  }
+
+  delay(10);
+}
+
+
+
+void virage(int VirageDegre,bool robot)
+{
+  ENCODER_ReadReset(1);
+  ENCODER_ReadReset(0);
+  // code
+  //la circonférence d'une roue est 23.93894cm
+  //la circonférence d'un tour du robot est de 59.6902cm
+  //1 degré est égal à 24.934 pulse, donc 25 pulse.
+
+  //définition des variables
+    
+    int Arondir;
+    float UnPulse;
+    if (robot==0){
+     UnPulse= 0.0469;
+      }
+   else{
+     UnPulse = 0.0469;
+     }
+
+    float ValeurPulse;
+    //trouve le nombre de pulse nécessaire au virage
+    ValeurPulse = abs(VirageDegre/UnPulse);
+    Arondir = round(ValeurPulse);
+    
+   //réinitialise le compteur de pule de l'encodeur
+   ENCODER_Reset(0);
+   ENCODER_Reset(1);
+  //Permet d'arrêter le virage à la bonne direction. 
+  
+    //Défini si le virage sera vers la gauche ou vers la droite. Positif est en sense horaire et négatif est anti-horaire. 
+      if (VirageDegre>=0)
+      {
+        ENCODER_Reset(0);
+        ENCODER_Reset(1);
+        while (ENCODER_Read(0)<= Arondir)
+        {
+          if (ENCODER_Read(0) <= (Arondir/3)) 
+          {
+            MOTOR_SetSpeed(0,0.4);
+            MOTOR_SetSpeed(1,-0.4);
+          }
+          else if (ENCODER_Read(0) <= (2*Arondir/3) )
+          {
+            MOTOR_SetSpeed(0,0.3);
+            MOTOR_SetSpeed(1,-0.3);
+          }
+          else
+          {
+            MOTOR_SetSpeed(0,0.2);
+            MOTOR_SetSpeed(1,-0.2);
+          }
+          
+        }
+        
+      }
+      else if(VirageDegre<=0)
+      {
+        while (ENCODER_Read(1)<= Arondir)
+        {
+          if (ENCODER_Read(1)<= (Arondir/3))
+          {
+            MOTOR_SetSpeed(0,-0.4);
+            MOTOR_SetSpeed(1,0.4);
+          }
+          
+          else if (ENCODER_Read(1) <= (2*Arondir/3))
+          {
+            MOTOR_SetSpeed(0,-0.3);
+            MOTOR_SetSpeed(1,0.3);
+          }
+          else 
+          {
+            MOTOR_SetSpeed(0,-0.2);
+            MOTOR_SetSpeed(1,0.2);
+          }
+        }
+        
+        
+      }
+  
+  //Arrête la rotation
+  MOTOR_SetSpeed(0,0);
+  MOTOR_SetSpeed(1,0);
+  //réinitialise le compteur de pule de l'encodeur
+   ENCODER_Reset(0);
+   ENCODER_Reset(1);
+
+   
+}
+
+void setup()
+{
+  BoardInit(); //pour librairie
+  Wire.begin();
+  MOTOR_SetSpeed(0, 0); //Set les moteurs à 0
+  MOTOR_SetSpeed(1, 0);
+
+  if (tcs.begin()) {
+        Serial.println("Found sensor");
+    } else {
+        Serial.println("No TCS34725 found ... check your connections");
+        while (1); // halt!
+    }
+
+    // use these three pins to drive an LED
+    pinMode(redpin, OUTPUT);
+    pinMode(greenpin, OUTPUT);
+    pinMode(bluepin, OUTPUT);
+
+    // thanks PhilB for this gamma table!
+    // it helps convert RGB colors to what humans see
+    for (int i = 0; i < 256; i++) {
+        float x = i;
+        x /= 255;
+        x = pow(x, 2.5);
+        x *= 255;
+
+        if (commonAnode) {
+            gammatable[i] = 255 - x;
+        } else {
+            gammatable[i] = x;
+        }
+        //Serial.println(gammatable[i]);
+    }
+
+}
+
+void loop() //fonction main permettant de mettre les distances et les angles de rotation pour le parcours
+{
+ 
+ // if(analogRead(A0) >= 600)
+//  { //pour le micro
+     //FonctionAvancer2(20);
+     // delay(1000);
+     // virage(-90,A);
+     //float rangeSONAR = SONAR_GetRange(0);  //sonar facile a utiliser
+     //Serial.print(rangeSONAR);
+     //float rangeIR =  1/(ROBUS_ReadIR(0) + 0.42); //J9 etant 0, J10 1, J11 2 et J12 3
+     //Serial.print("  ");
+     //Serial.println(rangeIR);
+      /* SERVO_Enable(0);
+      SERVO_Enable(1);
+      delay(100);
+      SERVO_SetAngle(1, 180); //ouvert
+      SERVO_SetAngle(0, 0);
+      delay(1000);
+      SERVO_SetAngle(1, 120);  //fermé
+      SERVO_SetAngle(0, 60);
+      delay(500);
+      SERVO_Disable(1); //de 180 à 90 pour ferme (180 exterieur, 0 interieur)
+      delay(4000);
+*/
+distanceIR = analogRead(A1)*1023/5;
+   
+  //}
+ SERVO_Enable(0);
+ SERVO_Enable(1);
+ delay(100);
+ SERVO_SetAngle(1, 180); //ouvert
+ SERVO_SetAngle(0, 0);
+ delay(100);
+  Avancer(100);
+  delay(500);
+  virage(90,A);
+  delay(500);
+  Avancer(25);
+  delay(500);
+  virage(-90,A);
+  delay(500);
+  Avancer(20);
+  delay(500);
+  //couleur 
+  Avancer(100);
+  delay(500);
+  //pick up la puce
+  SERVO_SetAngle(1, 120);  //fermé
+  SERVO_SetAngle(0, 60);
+  //delay(100);
+  //Avancer(80);
+  //delay(500);
+  //virage(90,B);
+  //delay(500);
+  //Avancer(23);
+  //delay(500);
+  //virage(-90,B);
+  //delay(3000);
+  //couleur (detecteur de couleur) icitte 
+  //couleur = rouge; 
+  //Avancer(130);
+  //MOTOR_SetSpeed(0,0);
+  //MOTOR_SetSpeed(1,0);
+  //pick up la petite
+  //
+  switch (couleur)
+  {
+ /*  case 1: 
+      Avancer(80);
+      delay(400);
+      virage(90,A);
+      delay(400);
+      */
+  case 1:
+      delay(2000);
+      Avancer(80);
+      delay(400);
+      virage(90,B);
+      delay(400);
+      Avancer(20);
+      MOTOR_SetSpeed(0,0);
+      MOTOR_SetSpeed(1,0);
+    break;
+   case 2: 
+      delay(2000);
+      Avancer(170);
+      delay(400);
+      virage(-90,A);
+      delay(400);
+      Avancer(40);
+      delay(400);
+      virage(-90,B);
+      delay(400);
+      Avancer(30);
+      MOTOR_SetSpeed(0,0);
+      MOTOR_SetSpeed(1,0);
+    break;
+     case 3: 
+      Avancer(250);
+      delay(400);
+      virage(90,A);
+      delay(400);
+      delay(2000);
+      Avancer(240);
+      delay(400);
+      virage(90,B);
+      delay(400);
+      Avancer(40);
+      MOTOR_SetSpeed(0,0.00);
+      MOTOR_SetSpeed(1,0.00);
+    break;
+  default:
+    break;
+  }
+  delay(50000);
+  delay(50000);
+  SERVO_Disable(1);
+  SERVO_Disable(0);
+}
