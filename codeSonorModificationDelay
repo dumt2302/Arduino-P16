@@ -73,7 +73,7 @@ void Avancer(int DistanceCm,int *P_distanceparcouru)
 
     if((distancequile <= DistanceRange) && (quilledefoncer!=2) && TimeNow >= DelaiRadarInitial)
     {
-        delay(200);
+        delay(300);
         MOTOR_SetSpeed(0, 0);
         MOTOR_SetSpeed(1, 0);
         quilledefoncer=1;
@@ -223,7 +223,7 @@ void loop(){
   virage(-90,B);
   delay(1000);
   Avancer(70,&x);
-  delay(500);
+  delay(1000);
   virage(90,B);
   delay(1000);
   distancerestante=400-distanceparcouru;
