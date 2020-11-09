@@ -14,16 +14,23 @@
 
 // our RGB -> eye-recognized gamma color
 byte gammatable[256];
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
 
 int FonctionCouleur(){
+  Wire.begin();
   int couleur = 0;
   uint16_t clear, red, green, blue;
 
     tcs.setInterrupt(false);      // turn on LED
 
     delay(60);  // takes 50ms to read
-
-    tcs.getRawData(&red, &green, &blue, &clear);
+    float summ = clear;
+    for(int i = 0; i <=9; i++)
+    {
+       tcs.getRawData(&red, &green, &blue, &clear);
+       summ += clear;
+    }
+      clear = summ / 10;
 
     tcs.setInterrupt(true);  // turn off LED
 
@@ -311,17 +318,15 @@ distanceIR = analogRead(A1)*1023/5;
  SERVO_SetAngle(1, 180); //ouvert
  SERVO_SetAngle(0, 0);
  delay(100);
-  Avancer(100);
+  Avancer(120);
   delay(500);
   virage(90,A);
   delay(500);
   Avancer(25);
   delay(500);
   virage(-90,A);
+  couleur = FonctionCouleur();
   delay(500);
-  Avancer(20);
-  delay(500);
-  //couleur 
   Avancer(100);
   delay(500);
   //pick up la puce
