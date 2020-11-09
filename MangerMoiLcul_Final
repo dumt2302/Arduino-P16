@@ -15,7 +15,12 @@ int bleu = 2;
 int rouge =3;
 int block=1;
 int quilledefoncer=0;
-
+uint8_t distancequile = 100;
+uint8_t DistanceRange = 70;
+unsigned long TimeNow = 0;
+unsigned long DelaiRadar = 2000;
+unsigned long DelaiRadarInitial = 2000;
+unsigned long Period = 100;
 
 void MasterSlave(float MasterMOTOR, int32_t MasterENCODEUR, int32_t SlaveENCODEUR) //Prends en entrée la valeur du moteur maitre et les valeurs d'encodeur
 {
@@ -30,8 +35,6 @@ void MasterSlave(float MasterMOTOR, int32_t MasterENCODEUR, int32_t SlaveENCODEU
 
 void Avancer(int DistanceCm)
 {
-  unsigned long timer;
-
   ENCODER_ReadReset(0); //reset des encodeurs
   ENCODER_ReadReset(1);
   float vitesse;
@@ -51,12 +54,26 @@ void Avancer(int DistanceCm)
 #endif
    while ((DistanceCm > distance) && (quilledefoncer!=1))
   {
+    if(millis() >= DelaiRadar)
+    {
+      distancequile = SONAR_GetRange(0);
+      DelaiRadar+=Period;
+      Serial.print("distance Quille    ");
+      Serial.println(distancequile);
+    }
     
     y1 = a * distance + Vmin;
     y2 = Vmax;
     y3 = a * (DistanceCm - distance) + Vmin;
+    TimeNow = millis();
 
-
+    if((distancequile <= DistanceRange) && (quilledefoncer!=2) && TimeNow >= DelaiRadarInitial)
+    {
+        delay(400);
+        MOTOR_SetSpeed(0, 0);
+        MOTOR_SetSpeed(1, 0);
+        quilledefoncer=1;
+    }
     if(y1 < y2 && y1 < y3  )  //l'equation utilisee pour trouver la vitesse est toujour celle donnant le plus petit resultat dans le temps
     {
       distance = ENCODER_Read(0) * 0.0074809175 * compteur;
@@ -66,12 +83,6 @@ void Avancer(int DistanceCm)
       MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
       Serial.print("y1  ");                     //LES SERIAL.PRINT SONT IMPORTANTS, CAR ILS DONNENT UN DELAIS PARFAIT POUR NOTRE UTILISATION
       Serial.println(distance);
-      if(SONAR_GetRange(0)<70 && quilledefoncer!=2)
-      {
-         MOTOR_SetSpeed(0, 0);
-         MOTOR_SetSpeed(1, 0);
-         quilledefoncer=1;
-      }
 
     }
     else if(y2 < y1 && y2 < y3 )
@@ -83,12 +94,6 @@ void Avancer(int DistanceCm)
       MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
       Serial.print("y2  ");
       Serial.println(distance);
-     if(SONAR_GetRange(0)<70 && quilledefoncer!=2)
-      {
-          MOTOR_SetSpeed(0, 0);
-          MOTOR_SetSpeed(1, 0);
-          quilledefoncer=1;
-      }
     }
     else
     {
@@ -99,12 +104,6 @@ void Avancer(int DistanceCm)
       MasterSlave(vitesse, ENCODER_Read(0), ENCODER_Read(1));
       Serial.print("y3  ");
       Serial.println(distance);
-      if(SONAR_GetRange(0)<70 && quilledefoncer!=2)
-        {
-            MOTOR_SetSpeed(0, 0);
-            MOTOR_SetSpeed(1, 0);
-            quilledefoncer=1;
-        }
     }
   }
 
@@ -345,8 +344,9 @@ void loop(){
 */
 
 void loop(){
-  delay(4000);
+  delay(1000);
   Avancer(470);
+  Serial.print(millis());
   quilledefoncer=2;
   delay(1000);
   virage(-90,B);
