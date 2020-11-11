@@ -24,13 +24,22 @@ int FonctionCouleur(){
     tcs.setInterrupt(false);      // turn on LED
 
     delay(60);  // takes 50ms to read
-    float summ = clear;
+    float summC = 0;
+    float summR = 0;
+    float summB = 0;
+    float summG = 0;
     for(int i = 0; i <=9; i++)
     {
        tcs.getRawData(&red, &green, &blue, &clear);
-       summ += clear;
+       summC += clear;
+       summR += red;
+       summB += blue;
+       summG += green;
     }
-      clear = summ / 10;
+      clear = summC / 10;
+      red = summR / 10;
+      blue = summB / 10;
+      green = summG / 10;
 
     tcs.setInterrupt(true);  // turn off LED
 
@@ -55,18 +64,23 @@ int FonctionCouleur(){
     //analogWrite(redpin, gammatable[(int)r]);
     //analogWrite(greenpin, gammatable[(int)g]);
     //analogWrite(bluepin, gammatable[(int)b]);
-    if((clear <=1680) && (clear >=1600))
+    
+    if(red >=450 && blue >=500 && green >= 500)
     {
-      couleur = 2;
+      couleur = 3;  //rouge
+      digitalWrite(3, HIGH);
     }
-    else if((clear <=1790) && (clear >=1730))
+    else if(blue <=500)
     {
-      couleur = 1;
+      couleur = 1;  //jaune
+        digitalWrite(9, HIGH);
     }
-    else if((clear <=1860) && (clear >=1800))
+    else
     {
-      couleur = 3;
+      couleur = 2;  //bleu
+       digitalWrite(8, HIGH);
     }
+    
     return couleur;
 }
 
@@ -253,6 +267,9 @@ void setup()
   Wire.begin();
   MOTOR_SetSpeed(0, 0); //Set les moteurs à 0
   MOTOR_SetSpeed(1, 0);
+  pinMode(3, OUTPUT);
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
 
   if (tcs.begin()) {
         Serial.println("Found sensor");
@@ -350,13 +367,8 @@ distanceIR = analogRead(A1)*1023/5;
   //
   switch (couleur)
   {
- /*  case 1: 
-      Avancer(80);
-      delay(400);
-      virage(90,A);
-      delay(400);
-      */
   case 1:
+     // digitalWrite(9, HIGH);
       delay(2000);
       Avancer(80);
       delay(400);
@@ -365,8 +377,10 @@ distanceIR = analogRead(A1)*1023/5;
       Avancer(20);
       MOTOR_SetSpeed(0,0);
       MOTOR_SetSpeed(1,0);
+      digitalWrite(9, LOW);
     break;
    case 2: 
+     // digitalWrite(8, HIGH);
       delay(2000);
       Avancer(170);
       delay(400);
@@ -379,8 +393,10 @@ distanceIR = analogRead(A1)*1023/5;
       Avancer(30);
       MOTOR_SetSpeed(0,0);
       MOTOR_SetSpeed(1,0);
+      digitalWrite(8, LOW);
     break;
      case 3: 
+      //digitalWrite(3, HIGH);
       Avancer(250);
       delay(400);
       virage(90,A);
@@ -393,6 +409,7 @@ distanceIR = analogRead(A1)*1023/5;
       Avancer(40);
       MOTOR_SetSpeed(0,0.00);
       MOTOR_SetSpeed(1,0.00);
+      digitalWrite(3, LOW);
     break;
   default:
     break;
