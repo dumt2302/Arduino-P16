@@ -65,12 +65,12 @@ int FonctionCouleur(){
     //analogWrite(greenpin, gammatable[(int)g]);
     //analogWrite(bluepin, gammatable[(int)b]);
     
-    if(red >=450 && blue >=500 && green >= 500)
+    if(red >=450 && blue >=520 && green >= 500)
     {
       couleur = 3;  //rouge
       digitalWrite(3, HIGH);
     }
-    else if(blue <=500)
+    else if(blue <=519)
     {
       couleur = 1;  //jaune
         digitalWrite(9, HIGH);
@@ -96,6 +96,7 @@ int couleur;
 int jaune =1;
 int bleu = 2;
 int rouge =3;
+int flagSifflet = 0;
 
 
 void MasterSlave(float MasterMOTOR, int32_t MasterENCODEUR, int32_t SlaveENCODEUR) //Prends en entrée la valeur du moteur maitre et les valeurs d'encodeur
@@ -304,38 +305,26 @@ void setup()
 void loop() //fonction main permettant de mettre les distances et les angles de rotation pour le parcours
 {
  
- // if(analogRead(A0) >= 600)
-//  { //pour le micro
-     //FonctionAvancer2(20);
-     // delay(1000);
-     // virage(-90,A);
-     //float rangeSONAR = SONAR_GetRange(0);  //sonar facile a utiliser
-     //Serial.print(rangeSONAR);
-     //float rangeIR =  1/(ROBUS_ReadIR(0) + 0.42); //J9 etant 0, J10 1, J11 2 et J12 3
-     //Serial.print("  ");
-     //Serial.println(rangeIR);
-      /* SERVO_Enable(0);
-      SERVO_Enable(1);
-      delay(100);
+  if(analogRead(A0) >= 600) //600 de base
+  { 
+    flagSifflet = 1;//pour le micro
+  }
+  if(flagSifflet == 1){   
+    for(int j = 0; j <= 14;j++){
+      SERVO_SetAngle(1, 60); //ouvert
+      SERVO_SetAngle(0, 0);  //fermer
+      delay(500); 
       SERVO_SetAngle(1, 180); //ouvert
-      SERVO_SetAngle(0, 0);
-      delay(1000);
-      SERVO_SetAngle(1, 120);  //fermé
-      SERVO_SetAngle(0, 60);
-      delay(500);
-      SERVO_Disable(1); //de 180 à 90 pour ferme (180 exterieur, 0 interieur)
-      delay(4000);
-*/
-distanceIR = analogRead(A1)*1023/5;
-   
-  //}
+      SERVO_SetAngle(0, 150);  //fermer
+      delay(500); 
+    }
  SERVO_Enable(0);
  SERVO_Enable(1);
  delay(100);
  SERVO_SetAngle(1, 180); //ouvert
- SERVO_SetAngle(0, 0);
+ SERVO_SetAngle(0, 0);  //fermer
  delay(100);
-  Avancer(120);
+  Avancer(96);
   delay(500);
   virage(90,A);
   delay(500);
@@ -344,30 +333,15 @@ distanceIR = analogRead(A1)*1023/5;
   virage(-90,A);
   couleur = FonctionCouleur();
   delay(500);
-  Avancer(100);
+  Avancer(120);
   delay(500);
   //pick up la puce
   SERVO_SetAngle(1, 120);  //fermé
   SERVO_SetAngle(0, 60);
-  //delay(100);
-  //Avancer(80);
-  //delay(500);
-  //virage(90,B);
-  //delay(500);
-  //Avancer(23);
-  //delay(500);
-  //virage(-90,B);
-  //delay(3000);
-  //couleur (detecteur de couleur) icitte 
-  //couleur = rouge; 
-  //Avancer(130);
-  //MOTOR_SetSpeed(0,0);
-  //MOTOR_SetSpeed(1,0);
-  //pick up la petite
-  //
+  
   switch (couleur)
   {
-  case 1:
+  case 1: //jaune
      // digitalWrite(9, HIGH);
       delay(2000);
       Avancer(80);
@@ -379,34 +353,33 @@ distanceIR = analogRead(A1)*1023/5;
       MOTOR_SetSpeed(1,0);
       digitalWrite(9, LOW);
     break;
-   case 2: 
+   case 2: //bleu
      // digitalWrite(8, HIGH);
       delay(2000);
-      Avancer(170);
+      Avancer(160);
       delay(400);
       virage(-90,A);
       delay(400);
-      Avancer(40);
-      delay(400);
-      virage(-90,B);
-      delay(400);
-      Avancer(30);
+      Avancer(20);
+     // delay(400);
+      //virage(-90,B);
+      //delay(400);
+     // Avancer(30);
       MOTOR_SetSpeed(0,0);
       MOTOR_SetSpeed(1,0);
       digitalWrite(8, LOW);
     break;
-     case 3: 
+     case 3: //rouge
       //digitalWrite(3, HIGH);
-      Avancer(250);
+      Avancer(240);
       delay(400);
       virage(90,A);
       delay(400);
-      delay(2000);
-      Avancer(240);
-      delay(400);
-      virage(90,B);
-      delay(400);
-      Avancer(40);
+      Avancer(30);
+      //delay(400);
+      //virage(90,B);
+      //delay(400);
+      //Avancer(40);
       MOTOR_SetSpeed(0,0.00);
       MOTOR_SetSpeed(1,0.00);
       digitalWrite(3, LOW);
@@ -418,4 +391,8 @@ distanceIR = analogRead(A1)*1023/5;
   delay(50000);
   SERVO_Disable(1);
   SERVO_Disable(0);
+}
+else{
+
+}
 }
